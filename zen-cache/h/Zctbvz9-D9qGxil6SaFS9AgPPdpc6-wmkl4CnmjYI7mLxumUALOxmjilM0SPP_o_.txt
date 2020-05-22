@@ -1,0 +1,4 @@
+7607867 1584730181 36264541 AAmx7oGGZhsRO3xro_1keBMT7JVQfdRjfMIL8OY1h_wUpn428__RnI20XeZBzSwb /home/sasuseso/Scripts/solo5/bindings/hvt/solo5_hvt.lds
+2688024 1587862614 873854172 307-FHI2C2X-xqfiEV1GM1MW3deCbKAXqulxuDAa6bWVV0KhoRSG67AQBnkocI7G /home/sasuseso/Scripts/solo5-zen/zen-cache/o/FeYo_GGjyG4mR9z8UBSuZvthcZWFQ6nwTJqlk6Hq6p5sCv9SAo8ujiuZ4DiBCKff/manifest.o
+2688053 1587865424 37018060 k2TuJynCc-ozZG5qpP1xtXp68SdENev2O_Vy0S4cK0Pzbw0J1IY7Qq5s5T9nH966 /home/sasuseso/Scripts/solo5-zen/zen-cache/hello_world.o
+7611650 1587792951 572320074 BIP6cUP-nsn7weAxCEpcZE-87TSmb4tRLc567-AsfJBhxrJOuG5ZEQMNA1wohdZW /home/sasuseso/Scripts/solo5/bindings/hvt/solo5_hvt.o

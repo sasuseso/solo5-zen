@@ -1,0 +1,10 @@
+const solo5 = @import("./solo5_h.zen");
+
+fn puts(str: []const u8) void {
+    solo5.solo5_console_write(@ptrCast([*]const u8, str.ptr), str.len);
+}
+
+pub export fn solo5_app_main(si: *const solo5.solo5_start_info) c_int {
+    puts("\n\nCongratulations on your first step to writing perfect software in Zen on Solo5.\n\n");
+    return solo5.SOLO5_EXIT_SUCCESS;
+}

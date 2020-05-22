@@ -1,0 +1,26 @@
+TOPDIR = ../solo5
+ELFTOOL := $(TOPDIR)/elftool/solo5-elftool
+CC := $(MAKECONF_CC)
+CFLAGS := -std=c11 -Wall -Wextra -Werror -O2 -g
+CFLAGS += -ffreestanding -fstack-protector-strong $(MAKECONF_CFLAGS)
+CPPFLAGS := -isystem $(TOPDIR)/include/crt -I$(TOPDIR)/include/solo5
+LD := $(MAKECONF_LD)
+LDFLAGS := -nostdlib -z max-page-size=$(CONFIG_GUEST_PAGE_SIZE) -static \
+    $(MAKECONF_LDFLAGS)
+OBJCOPY := objcopy
+
+LDS.hvt := $(TOPDIR)/bindings/hvt/solo5_hvt.lds
+BINDINGS.hvt := $(TOPDIR)/bindings/hvt/solo5_hvt.o
+
+manifest.c: manifest.json $(TOPDIR)/include/solo5/mft_abi.h $(ELFTOOL)
+	@echo "ELFTOOL $<"
+	$(ELFTOOL) gen-manifest $< $@
+
+%.o: %.c ../../include/solo5/solo5.h
+	@echo "CC $<"
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+%.hvt: %.o manifest.o $(LDS.hvt) $(BINDINGS.hvt)
+	@echo "LD $@"
+	$(LD) $(LDFLAGS) -T $(LDS.hvt) $(BINDINGS.hvt) $< manifest.o -o $@
+

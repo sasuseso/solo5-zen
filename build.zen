@@ -1,0 +1,58 @@
+const std = @import("std");
+const Builder = @import("std").build.Builder;
+
+pub fn build(b: *Builder) anyerror!void {
+    const target = try std.build.Target.parse("x86_64-freestanding-none");
+
+    var gen_manifest = std.container.ArrayList([]const u8){ .allocator = b.allocator };
+    defer gen_manifest.deinit();
+    try gen_manifest.appendSlice([_][]const u8{
+        "./solo5/elftool/solo5-elftool",
+        "gen-manifest",
+        "src/manifest.json",
+        "zen-cache/manifest.c",
+    });
+    const manifest_c = b.addSystemCommand(gen_manifest.toSlice());
+
+    var clang_opts = std.container.ArrayList([]const u8){ .allocator = b.allocator };
+    defer clang_opts.deinit();
+    try clang_opts.appendSlice([_][]const u8{
+        "-fstack-protector-strong",
+        "-isystem ./solo5/include/crt",
+        "-I./solo5/include/solo5",
+        //"-fno-integrated-as",
+        //"-Wall",
+        //"-Wextra",
+        //"-Werror",
+        //"-02",
+        //"-mstack-protector-guard=global",
+    });
+
+    const manifest_o = b.addObject("manifest", null);
+    manifest_o.setTheTarget(target);
+    manifest_o.addCSourceFile("zen-cache/manifest.c", clang_opts.toSlice());
+    manifest_o.step.dependOn(&manifest_c.step);
+
+    const hello_solo5 = b.addObject("hello_world", "src/main.zen");
+    hello_solo5.setTheTarget(target);
+    hello_solo5.setOutputDir("zen-cache");
+
+    const solo5_app = b.addExecutable("hello_world.hvt", null);
+    solo5_app.setLinkerScriptPath("../solo5/bindings/hvt/solo5_hvt.lds");
+    solo5_app.addObject(manifest_o);
+    solo5_app.addObject(hello_solo5);
+    solo5_app.addObjectFile("./solo5/bindings/hvt/solo5_hvt.o");
+    solo5_app.addIncludeDir("./solo5/include/solo5");
+    solo5_app.setOutputDir("zen-cache");
+    solo5_app.step.dependOn(&hello_solo5.step);
+    b.default_step.dependOn(&solo5_app.step);
+
+    const run = b.step("run", "Run on QEMU");
+    const run_solo5 = b.addSystemCommand(&[_][]const u8{
+        "sudo",
+        "./solo5/tenders/hvt/solo5-hvt",
+        "zen-cache/hello_world.hvt",
+    });
+    run_solo5.step.dependOn(&solo5_app.step);
+    run.dependOn(&run_solo5.step);
+}
