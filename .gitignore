@@ -1,4 +1,4 @@
 zen-cache
-manifest.*
+manifest.c
 *.tar.gz
 solo5-v0.6.5

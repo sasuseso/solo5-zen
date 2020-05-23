@@ -15,8 +15,7 @@ pub fn build(b: *Builder) anyerror!void {
     var gen_manifest = std.container.ArrayList([]const u8){ .allocator = b.allocator };
     defer gen_manifest.deinit();
     try gen_manifest.appendSlice([_][]const u8{
-        //solo5_dir ++ "/elftool/solo5-elftool",
-        try fmt.allocPrint(b.allocator, "{}/elftool/solo5-elftool", solo5_dir),
+        try fmt.allocPrint(b.allocator, "./{}/elftool/solo5-elftool", solo5_dir),
         "gen-manifest",
         "src/manifest.json",
         "zen-cache/manifest.c",
