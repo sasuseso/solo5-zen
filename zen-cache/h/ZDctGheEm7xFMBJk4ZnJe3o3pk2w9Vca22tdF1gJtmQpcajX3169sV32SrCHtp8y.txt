@@ -1,5 +1,0 @@
-2623462 1587865414 546473558 kJI3QwYjg1yxh6IEtWJeoitSGTb8r41jNAeKdp9jRW71Hj8VVjxl_Qygcfdc28V4 /home/sasuseso/projects/solo5-zen/src/main.zen
-5506151 1574581173 0 kbjhv9uxzv5wieB9DetzVh8bwWV5bQC7vLglkYOcWxNlLQy_WptZaXFPMVFfKk4i /home/sasuseso/zen/lib/zen/std/std.zen
-5506175 1574581173 0 20NAQCcXGNm_BDicL2nHIsV85EJopoij5FU2OMSQShLU4ewjvxq9iPZ-jLiSOBrm /home/sasuseso/zen/lib/zen/std/builtin.zen
-2688029 1587862950 388129289 oP5U4ZbL2kN2pD2ZYGMh6VxJrnlRjLXbvqCDOs2OChdUSkaeOD9OBYrkaXrN6y8b /home/sasuseso/projects/solo5-zen/src/solo5_h.zen
-5506445 1574581173 0 U--9q0MbKn60fHRZr-a6gvxozrOMsxMqSLMFHa32ozttrBZ4w5vXOc8SOfYhVlHI /home/sasuseso/zen/lib/zen/std/target.zen
