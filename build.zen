@@ -1,13 +1,22 @@
 const std = @import("std");
+const fmt = std.fmt;
 const Builder = @import("std").build.Builder;
 
 pub fn build(b: *Builder) anyerror!void {
     const target = try std.build.Target.parse("x86_64-freestanding-none");
 
+    var solo5_dir: []const u8 = "solo5-v0.6.5";
+
+    const own_dir = b.option([]const u8, "solo5_dir", "You can specify your own solo5 directory") orelse "";
+    if (own_dir.len != 0) {
+        solo5_dir = own_dir;
+    }
+
     var gen_manifest = std.container.ArrayList([]const u8){ .allocator = b.allocator };
     defer gen_manifest.deinit();
     try gen_manifest.appendSlice([_][]const u8{
-        "./solo5/elftool/solo5-elftool",
+        //solo5_dir ++ "/elftool/solo5-elftool",
+        try fmt.allocPrint(b.allocator, "{}/elftool/solo5-elftool", solo5_dir),
         "gen-manifest",
         "src/manifest.json",
         "zen-cache/manifest.c",
@@ -18,14 +27,8 @@ pub fn build(b: *Builder) anyerror!void {
     defer clang_opts.deinit();
     try clang_opts.appendSlice([_][]const u8{
         "-fstack-protector-strong",
-        "-isystem ./solo5/include/crt",
-        "-I./solo5/include/solo5",
-        //"-fno-integrated-as",
-        //"-Wall",
-        //"-Wextra",
-        //"-Werror",
-        //"-02",
-        //"-mstack-protector-guard=global",
+        try fmt.allocPrint(b.allocator, "-I{}/include/crt", solo5_dir),
+        try fmt.allocPrint(b.allocator, "-I{}/include/solo5", solo5_dir),
     });
 
     const manifest_o = b.addObject("manifest", null);
@@ -38,11 +41,11 @@ pub fn build(b: *Builder) anyerror!void {
     hello_solo5.setOutputDir("zen-cache");
 
     const solo5_app = b.addExecutable("hello_world.hvt", null);
-    solo5_app.setLinkerScriptPath("../solo5/bindings/hvt/solo5_hvt.lds");
+    solo5_app.setLinkerScriptPath(try fmt.allocPrint(b.allocator, "{}/bindings/hvt/solo5_hvt.lds", solo5_dir));
     solo5_app.addObject(manifest_o);
     solo5_app.addObject(hello_solo5);
-    solo5_app.addObjectFile("./solo5/bindings/hvt/solo5_hvt.o");
-    solo5_app.addIncludeDir("./solo5/include/solo5");
+    solo5_app.addObjectFile(try fmt.allocPrint(b.allocator, "{}/bindings/hvt/solo5_hvt.o", solo5_dir));
+    solo5_app.addIncludeDir(try fmt.allocPrint(b.allocator, "{}/include/solo5", solo5_dir));
     solo5_app.setOutputDir("zen-cache");
     solo5_app.step.dependOn(&hello_solo5.step);
     b.default_step.dependOn(&solo5_app.step);
@@ -50,7 +53,7 @@ pub fn build(b: *Builder) anyerror!void {
     const run = b.step("run", "Run on QEMU");
     const run_solo5 = b.addSystemCommand(&[_][]const u8{
         "sudo",
-        "./solo5/tenders/hvt/solo5-hvt",
+        try fmt.allocPrint(b.allocator, "{}/tenders/hvt/solo5-hvt", solo5_dir),
         "zen-cache/hello_world.hvt",
     });
     run_solo5.step.dependOn(&solo5_app.step);
