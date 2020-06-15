@@ -2,61 +2,83 @@ const std = @import("std");
 const fmt = std.fmt;
 const Builder = @import("std").build.Builder;
 
-pub fn build(b: *Builder) anyerror!void {
-    const target = try std.build.Target.parse("x86_64-freestanding-none");
+pub fn build(b: *mut Builder) anyerror!void {
+    const target = try std.zen.CrossTarget.parse(.{
+        .arch_os_abi = "x86_64-freestanding-none",
+        //.mcpu = "x86-64",
+        //.mattr = "64bit",
+    });
 
-    var solo5_dir: []const u8 = "solo5-v0.6.5";
+    const solo5_dir = b.option([]u8, "solo5_dir", "You can specify your own solo5 directory") orelse "solo5-v0.6.5";
+    //solo5_dir = if (own_dir.len != 0) own_dir else &"solo5-v0.6.5"[0..12];
+    std.fs.cwd().access(solo5_dir, .{ .read = true, .write = false }) catch |err| {
+        std.debug.warn("solo5 directory not found. path: {}", .{solo5_dir});
+        return;
+    };
 
-    const own_dir = b.option([]const u8, "solo5_dir", "You can specify your own solo5 directory") orelse "";
-    if (own_dir.len != 0) {
-        solo5_dir = own_dir;
-    }
+    //var gen_manifest = std.container.ArrayList([]mut u8){ .allocator = b.allocator };
+    //defer gen_manifest.deinit();
+    //try gen_manifest.appendSlice([_][]mut u8{
+    //try fmt.allocPrint(b.allocator, "./{}/elftool/solo5-elftool", solo5_dir),
+    //"gen-manifest",
+    //"src/manifest.json",
+    //"zen-cache/manifest.c",
+    //});
 
-    var gen_manifest = std.container.ArrayList([]const u8){ .allocator = b.allocator };
-    defer gen_manifest.deinit();
-    try gen_manifest.appendSlice([_][]const u8{
-        try fmt.allocPrint(b.allocator, "./{}/elftool/solo5-elftool", solo5_dir),
+    const manifest_c = b.addSystemCommand(&[_][]u8{
+        try fmt.allocPrint(b.allocator, "./{}/elftool/solo5-elftool", .{solo5_dir}),
         "gen-manifest",
         "src/manifest.json",
         "zen-cache/manifest.c",
     });
-    const manifest_c = b.addSystemCommand(gen_manifest.toSlice());
 
-    var clang_opts = std.container.ArrayList([]const u8){ .allocator = b.allocator };
-    defer clang_opts.deinit();
-    try clang_opts.appendSlice([_][]const u8{
+    //var clang_opts = std.container.ArrayList([]mut u8){ .allocator = b.allocator };
+    //defer clang_opts.deinit();
+    //try clang_opts.appendSlice([_][]mut u8{
+    //"-fstack-protector-strong",
+    //"-nostdinc",
+    //"-std=c11",
+    ////try fmt.allocPrint(b.allocator, "-I{}/include/crt", solo5_dir),
+    //try fmt.allocPrint(b.allocator, "-I{}/include/solo5", solo5_dir),
+    //});
+
+    const manifest_o = b.addObject("manifest", null);
+    manifest_o.setTarget(target);
+    manifest_o.addCSourceFile("zen-cache/manifest.c", &[_][]u8{
         "-fstack-protector-strong",
         "-nostdinc",
         "-std=c11",
-        //try fmt.allocPrint(b.allocator, "-I{}/include/crt", solo5_dir),
-        try fmt.allocPrint(b.allocator, "-I{}/include/solo5", solo5_dir),
+        try fmt.allocPrint(b.allocator, "-I{}/include/solo5", .{solo5_dir}),
     });
-
-    const manifest_o = b.addObject("manifest", null);
-    manifest_o.setTheTarget(target);
-    manifest_o.addCSourceFile("zen-cache/manifest.c", clang_opts.toSlice());
-    manifest_o.step.dependOn(&manifest_c.step);
+    //manifest_o.step.dependOn(&mut manifest_c.step);
+    b.addStepDependency(manifest_c, manifest_o);
 
     const hello_solo5 = b.addObject("hello_world", "src/main.zen");
-    hello_solo5.setTheTarget(target);
+    hello_solo5.setTarget(target);
     hello_solo5.setOutputDir("zen-cache");
 
     const solo5_app = b.addExecutable("hello_world.hvt", null);
-    solo5_app.setLinkerScriptPath(try fmt.allocPrint(b.allocator, "{}/bindings/hvt/solo5_hvt.lds", solo5_dir));
+
+    solo5_app.setLinkerScriptPath(try fmt.allocPrint(b.allocator, "{}/bindings/hvt/solo5_hvt.lds", .{solo5_dir}));
+
     solo5_app.addObject(manifest_o);
     solo5_app.addObject(hello_solo5);
-    solo5_app.addObjectFile(try fmt.allocPrint(b.allocator, "{}/bindings/hvt/solo5_hvt.o", solo5_dir));
-    solo5_app.addIncludeDir(try fmt.allocPrint(b.allocator, "{}/include/solo5", solo5_dir));
+    solo5_app.addObjectFile(try fmt.allocPrint(b.allocator, "{}/bindings/hvt/solo5_hvt.o", .{solo5_dir}));
+    solo5_app.addIncludeDir(try fmt.allocPrint(b.allocator, "{}/include/solo5", .{solo5_dir}));
     solo5_app.setOutputDir("zen-cache");
-    solo5_app.step.dependOn(&hello_solo5.step);
-    b.default_step.dependOn(&solo5_app.step);
+    //solo5_app.step.dependOn(&mut hello_solo5.step);
+    b.addStepDependency(solo5_app, hello_solo5);
+    //b.default_step.dependOn(&mut solo5_app.step);
+    b.addStepDependency(solo5_app, b.getInstallStep());
 
     const run = b.step("run", "Run on QEMU");
-    const run_solo5 = b.addSystemCommand(&[_][]const u8{
+    const run_solo5 = b.addSystemCommand(&mut [_][]u8{
         "sudo",
-        try fmt.allocPrint(b.allocator, "{}/tenders/hvt/solo5-hvt", solo5_dir),
+        try fmt.allocPrint(b.allocator, "{}/tenders/hvt/solo5-hvt", .{solo5_dir}),
         "zen-cache/hello_world.hvt",
     });
-    run_solo5.step.dependOn(&solo5_app.step);
-    run.dependOn(&run_solo5.step);
+    //run_solo5.step.dependOn(&mut solo5_app.step);
+    b.addStepDependency(run_solo5, solo5_app);
+    b.addStepDependency(run, run_solo5);
+    //run.dependOn(&mut run_solo5.step);
 }

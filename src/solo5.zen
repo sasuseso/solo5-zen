@@ -1,11 +1,11 @@
-pub extern fn solo5_console_write(buf: [*c]const u8, size: usize) void;
+pub extern fn solo5_console_write(buf: [*c]u8, size: usize) void;
 pub const SOLO5_EXIT_SUCCESS = 0;
 pub const solo5_start_info = extern struct {
-    cmdline: [*c]const u8,
+    cmdline: [*c]u8,
     heap_start: usize,
     heap_size: usize,
 };
 
-pub fn puts(str: []const u8) void {
-    solo5_console_write(@ptrCast([*]const u8, str.ptr), str.len);
+pub fn puts(str: []u8) void {
+    solo5_console_write(@ptrCast([*]u8, str.ptr), str.len);
 }

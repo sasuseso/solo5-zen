@@ -1,10 +1,10 @@
 const std = @import("std");
 const solo5 = @import("./solo5.zen");
 
-pub export fn solo5_app_main(si: *const solo5.solo5_start_info) c_int {
+pub export fn solo5_app_main(si: *solo5.solo5_start_info) c_int {
     var buf: [10]u8 = [_]u8{0} ** 10;
-    var allocator = std.heap.FixedBufferAllocator{ .buffer = &buf };
+    var allocator = std.heap.FixedBufferAllocator{ .buffer = &mut buf };
     solo5.puts("\n\nCongratulations on your first step to writing perfect software in Zen on Solo5.\n");
-    solo5.puts(std.fmt.bufPrint(&buf, "ARG: {s}", si.cmdline) catch unreachable);
+    solo5.puts(std.fmt.bufPrint(&mut buf, "ARG: {s}", .{si.cmdline}) catch unreachable);
     return solo5.SOLO5_EXIT_SUCCESS;
 }
