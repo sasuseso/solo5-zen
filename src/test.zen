@@ -1,0 +1,5 @@
+const std = @import("std");
+
+test "solo5 test" {
+    std.testing.ok(true);
+}

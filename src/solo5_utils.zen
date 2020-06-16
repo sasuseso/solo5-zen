@@ -1,0 +1,24 @@
+const std = @import("std");
+const solo5_console_write = @import("./solo5.zen").solo5_console_write;
+
+pub const block = @import("./solo5_utils/block.zen");
+
+pub fn puts(str: []u8) void {
+    solo5_console_write(@ptrCast([*]u8, str.ptr), str.len);
+}
+
+pub fn print(comptime format: []u8, args: anytype) void {
+    var buf: [100]u8 = [_]u8{0} ** 100;
+    var allocator = std.heap.FixedBufferAllocator{ .buffer = &mut buf };
+    puts(std.fmt.bufPrint(&mut buf, format, args) catch unreachable);
+}
+
+pub fn println(comptime format: []u8, args: anytype) void {
+    print(format ++ "\n", args);
+}
+
+pub const Solo5Error = error{
+    TryAgain,
+    InvalidArgument,
+    Unspecified,
+};

@@ -1,0 +1,71 @@
+const Solo5Error = @import("../solo5_utils.zen").Solo5Error;
+const BlockInfo = @import("../solo5.zen").BlockInfo;
+const BlockOffset = @import("../solo5.zen").BlockOffset;
+const Handle = @import("../solo5.zen").Handle;
+const solo5_result_t = @import("../solo5.zen").solo5_result_t;
+const solo5_block_acquire = @import("../solo5.zen").solo5_block_acquire;
+const solo5_block_write = @import("../solo5.zen").solo5_block_write;
+const solo5_block_read = @import("../solo5.zen").solo5_block_read;
+
+pub const BlockDevice = struct {
+    pub const ReadError = error{Solo5Error};
+
+    solo5_handle: Handle,
+    block_info: BlockInfo,
+    device_name: []u8,
+
+    index: usize = 0,
+
+    //allocator: heap.Allocator,
+
+    const Self = @This();
+
+    pub fn init(handle: Handle, block_info: BlockInfo, device_name: []u8) Self {
+        return Self{
+            .solo5_handle = handle,
+            .block_info = block_info,
+            .device_name = device_name,
+        };
+    }
+
+    pub fn get_block_size(self: Self) BlockOffset {
+        return self.block_info.block_size;
+    }
+
+    pub fn get_capacity(self: Self) BlockOffset {
+        return self.block_info.capacity;
+    }
+
+    pub fn acquire(self: *mut Self) Solo5Error!void {
+        return switch (solo5_block_acquire(self.device_name.ptr, &mut (self.solo5_handle), &(self.block_info))) {
+            solo5_result_t.SOLO5_R_AGAIN => Solo5Error.TryAgain,
+            solo5_result_t.SOLO5_R_EINVAL => Solo5Error.InvalidArgument,
+            solo5_result_t.SOLO5_R_EUNSPEC => Solo5Error.Unspecified,
+            else => return,
+        };
+    }
+
+    pub fn block_write(self: *mut Self, offset: BlockOffset, buf: []mut u8) Solo5Error!void {
+        return switch (solo5_block_write(self.solo5_handle, offset, @ptrCast([*]mut u8, buf.ptr), self.get_block_size())) {
+            solo5_result_t.SOLO5_R_AGAIN => Solo5Error.TryAgain,
+            solo5_result_t.SOLO5_R_EINVAL => Solo5Error.InvalidArgument,
+            solo5_result_t.SOLO5_R_EUNSPEC => Solo5Error.Unspecified,
+            else => return,
+        };
+    }
+
+    pub fn block_read(self: *mut Self, offset: BlockOffset, buf: []mut u8) Solo5Error!void {
+        return switch (solo5_block_read(self.solo5_handle, offset, @ptrCast([*]mut u8, buf.ptr), self.get_block_size())) {
+            solo5_result_t.SOLO5_R_AGAIN => Solo5Error.TryAgain,
+            solo5_result_t.SOLO5_R_EINVAL => Solo5Error.InvalidArgument,
+            solo5_result_t.SOLO5_R_EUNSPEC => Solo5Error.Unspecified,
+            else => return,
+        };
+    }
+
+    //pub fn read(self: *mut Self, buf: []mut u8) ReadError![]mut u8 {
+    //return if (buf < self.get_block_size()) {
+    //self.block_read(index * self.get_block_size(),
+
+    //}
+};
