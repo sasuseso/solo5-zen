@@ -1,10 +1,60 @@
 const std = @import("std");
-const solo5 = @import("./solo5.zen");
+const println = @import("./solo5_utils.zen").println;
+const BlockOffset = @import("./solo5.zen").BlockOffset;
+const BlockDevice = @import("./solo5_utils.zen").block.BlockDevice;
+const solo5_start_info = @import("./solo5.zen").solo5_start_info;
 
-pub export fn solo5_app_main(si: *const solo5.solo5_start_info) c_int {
-    var buf: [10]u8 = [_]u8{0} ** 10;
-    var allocator = std.heap.FixedBufferAllocator{ .buffer = &buf };
-    solo5.puts("\n\nCongratulations on your first step to writing perfect software in Zen on Solo5.\n");
-    solo5.puts(std.fmt.bufPrint(&buf, "ARG: {s}", si.cmdline) catch unreachable);
-    return solo5.SOLO5_EXIT_SUCCESS;
+comptime {
+    _ = @import("boot.zen");
+}
+
+pub fn main(si: *solo5_start_info) anyerror!void {
+    println("Hello, Solo5!!!", .{});
+    const cmdline = si.cmdline;
+    println("cmdline(len={}): {s}", .{ strlen(cmdline), cmdline });
+    var block_dev = BlockDevice.init(undefined, undefined, "storage");
+
+    block_dev.acquire() catch |err| {
+        println("Could not acquire 'storage' block device\n", .{});
+        return;
+    };
+
+    var off: BlockOffset = 0;
+    while (off < block_dev.get_capacity()) : (off += (10 * block_dev.get_block_size())) {
+        if (check_one_block(&mut block_dev, off) == false) {
+            println("check failed", .{});
+            break;
+        }
+    }
+}
+
+fn strlen(cstr: [*]u8) usize {
+    var i: usize = 0;
+    return while (true) : (i += 1) {
+        if (cstr[i] == 0) {
+            break i;
+        }
+    } else 0;
+}
+
+fn check_one_block(blk: *mut BlockDevice, offset: BlockOffset) bool {
+    var write_buf = [_]u8{0} ** 512;
+    var read_buf = [_]u8{0} ** 512;
+
+    for (write_buf) |*v, i| {
+        v.* = @to(u8, '0') + @intCast(u8, i % 10);
+    }
+
+    blk.block_write(offset, &mut write_buf) catch |err| {
+        return false;
+    };
+    blk.block_read(offset, &mut read_buf) catch |err| {
+        return false;
+    };
+
+    return for (write_buf) |v, i| {
+        if (v != read_buf[i]) {
+            break false;
+        }
+    } else true;
 }
