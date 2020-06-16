@@ -1,11 +1,34 @@
 pub extern fn solo5_console_write(buf: [*c]u8, size: usize) void;
+
+// Exit Status
 pub const SOLO5_EXIT_SUCCESS = 0;
+pub const SOLO5_EXIT_FAILURE = 1;
+
 pub const solo5_start_info = extern struct {
     cmdline: [*c]u8,
     heap_start: usize,
     heap_size: usize,
 };
 
-pub fn puts(str: []u8) void {
-    solo5_console_write(@ptrCast([*]u8, str.ptr), str.len);
-}
+pub const Handle = u64;
+pub const BlockOffset = u64;
+
+pub const BlockInfo = extern struct {
+    capacity: BlockOffset,
+    block_size: BlockOffset,
+};
+
+pub extern fn solo5_block_acquire(name: [*]u8, handle: *mut Handle, info: *BlockInfo) solo5_result_t;
+pub extern fn solo5_block_write(handle: Handle, offset: BlockOffset, buf: [*]u8, size: usize) solo5_result_t;
+pub extern fn solo5_block_read(handle: Handle, offset: BlockOffset, buf: [*]mut u8, size: usize) solo5_result_t;
+
+pub const SOLO5_R_OK = 0;
+pub const SOLO5_R_AGAIN = 1;
+pub const SOLO5_R_EINVAL = 2;
+pub const SOLO5_R_EUNSPEC = 3;
+pub const solo5_result_t = extern enum {
+    SOLO5_R_OK = 0,
+    SOLO5_R_AGAIN = 1,
+    SOLO5_R_EINVAL = 2,
+    SOLO5_R_EUNSPEC = 3,
+};

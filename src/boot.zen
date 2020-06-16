@@ -1,0 +1,9 @@
+const solo5 = @import("./solo5.zen");
+
+pub export fn solo5_app_main(si: *solo5.solo5_start_info) c_int {
+    @import("root").main(si) catch |err| {
+        return solo5.SOLO5_EXIT_FAILURE;
+    };
+
+    return solo5.SOLO5_EXIT_SUCCESS;
+}

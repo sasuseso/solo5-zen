@@ -1,0 +1,26 @@
+const std = @import("std");
+const builtin = @import("builtin");
+const solo5 = @import("./solo5.zen");
+const solo5_utils = @import("./solo5_utils.zen");
+const print = solo5_utils.print;
+const println = solo5_utils.println;
+
+comptime {
+    _ = @import("./boot.zen");
+}
+
+pub fn main() anyerror!void {
+    //for (builtin.test_functions) |test_fn| {
+    //print("{}...", .{test_fn.name});
+    //test_fn.func() catch |err| {
+    //panic(test_fn.name, null);
+    //};
+    //println("OK", .{});
+    println("Test", .{});
+    //}
+}
+
+pub fn panic(msg: []u8, stack_trace: ?*mut builtin.StackTrace) noreturn {
+    //println("{}", .{msg});
+    while (true) {}
+}
