@@ -12,7 +12,14 @@ Build and Run
 -------------
 
 To build: ```zen build```  
+
 To run: ```zen build run```
+
+### With Docker
+
+1. ```docker run --privileged -it --rm solo5-zen-image```
+2. ```zen build run -Dsolo5_dir=../solo5```
+
 
 References
 ----------
